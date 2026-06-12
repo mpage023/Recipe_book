@@ -191,6 +191,20 @@
   .view-link{
     display:inline-block; margin-top:14px; color:var(--turq); font-weight:600; text-decoration:none;
   }
+  .section-label{
+    font-family:'Space Grotesk', sans-serif; font-weight:700;
+    font-size:0.9rem; text-transform:uppercase; letter-spacing:0.05em;
+    color:var(--lime); margin-top:18px; margin-bottom:0;
+  }
+  .recipe-columns{ display:flex; flex-direction:column; gap:4px; }
+  @media(min-width:700px){
+    .modal:has(.recipe-columns){ max-width:820px; }
+    .recipe-columns{
+      flex-direction:row; gap:24px; align-items:flex-start;
+    }
+    .ingredients-col{ flex:0 0 240px; }
+    .method-col{ flex:1; min-width:0; }
+  }
 
   /* TOAST */
   .toast{
@@ -223,6 +237,7 @@
     <div class="logo"><span class="dot"></span> Recipe Book</div>
     <div class="header-actions">
       <button class="btn-ghost" onclick="openSettings()">Sync</button>
+      <button class="btn-ghost" onclick="pickRandom()">🎲 Surprise me</button>
       <button class="btn-primary" onclick="openEditor()">+ Add recipe</button>
     </div>
   </header>
@@ -250,9 +265,11 @@
     <label>Tags (comma separated)</label>
     <input id="f-tags" type="text" placeholder="e.g. dinner, chicken, oven">
     <label>Link (optional)</label>
-    <input id="f-link" type="text" placeholder="https://...">
-    <label>Recipe</label>
-    <textarea id="f-text" rows="10" placeholder="Ingredients and method..."></textarea>
+    <input id="f-link" type="url" placeholder="https://..." autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false">
+    <label>Ingredients</label>
+    <textarea id="f-ingredients" rows="8" placeholder="One ingredient per line, e.g.&#10;2 salmon fillets&#10;2 tbsp soy sauce&#10;1 tbsp honey"></textarea>
+    <label>Method</label>
+    <textarea id="f-method" rows="8" placeholder="1. Mix soy sauce, honey, garlic and ginger.&#10;2. Marinate salmon for 10 minutes.&#10;3. Pan-fry..."></textarea>
     <div class="modal-actions">
       <button class="btn-ghost" id="deleteBtn" onclick="deleteRecipe()" style="display:none;">Delete</button>
       <button class="btn-ghost" onclick="closeEditor()">Cancel</button>
@@ -269,8 +286,18 @@
     <p id="v-desc" style="color:var(--muted); margin-top:6px;"></p>
     <div class="view-tags" id="v-tags"></div>
     <a id="v-link" class="view-link" target="_blank" rel="noopener">View original source ↗</a>
-    <div class="view-text" id="v-text"></div>
+    <div class="recipe-columns">
+      <div class="ingredients-col">
+        <h3 class="section-label">Ingredients</h3>
+        <div class="view-text" id="v-ingredients"></div>
+      </div>
+      <div class="method-col">
+        <h3 class="section-label">Method</h3>
+        <div class="view-text" id="v-method"></div>
+      </div>
+    </div>
     <div class="modal-actions">
+      <button class="btn-ghost" onclick="deleteFromView()" style="color:var(--coral);">Delete</button>
       <button class="btn-ghost" onclick="editFromView()">Edit</button>
     </div>
   </div>
@@ -318,7 +345,8 @@ const LS_CFG = 'recipeBookGitHubConfig';
 
 let recipes = JSON.parse(localStorage.getItem(LS_KEY) || '[]');
 let config = JSON.parse(localStorage.getItem(LS_CFG) || '{}');
-let activeTag = null;
+let activeTags = new Set();
+let currentFiltered = [];
 let editingId = null;
 let viewingId = null;
 
@@ -330,7 +358,8 @@ if (recipes.length === 0) {
     description: "Quick weeknight salmon with a sticky honey soy glaze, served with steamed greens.",
     tags: ["dinner", "fish", "quick"],
     link: "",
-    text: "Ingredients:\n- 2 salmon fillets\n- 2 tbsp soy sauce\n- 1 tbsp honey\n- 1 clove garlic, minced\n- 1 tsp grated ginger\n- Steamed broccoli and rice to serve\n\nMethod:\n1. Mix soy sauce, honey, garlic and ginger in a bowl.\n2. Marinate salmon for 10 minutes.\n3. Pan-fry skin-side down for 4 minutes, flip and cook 3 more minutes, basting with marinade.\n4. Serve over rice with steamed greens."
+    ingredients: "2 salmon fillets\n2 tbsp soy sauce\n1 tbsp honey\n1 clove garlic, minced\n1 tsp grated ginger\nSteamed broccoli and rice, to serve",
+    method: "1. Mix soy sauce, honey, garlic and ginger in a bowl.\n2. Marinate salmon for 10 minutes.\n3. Pan-fry skin-side down for 4 minutes, flip and cook 3 more minutes, basting with marinade.\n4. Serve over rice with steamed greens."
   }];
   save();
 }
@@ -350,11 +379,23 @@ function renderTags(){
   container.innerHTML = '';
   allTags().forEach(tag => {
     const chip = document.createElement('div');
-    chip.className = 'tag-chip' + (activeTag === tag ? ' active' : '');
+    chip.className = 'tag-chip' + (activeTags.has(tag) ? ' active' : '');
     chip.textContent = tag;
-    chip.onclick = () => { activeTag = (activeTag === tag) ? null : tag; render(); };
+    chip.onclick = () => {
+      if (activeTags.has(tag)) activeTags.delete(tag);
+      else activeTags.add(tag);
+      render();
+    };
     container.appendChild(chip);
   });
+  if (activeTags.size > 0){
+    const clear = document.createElement('div');
+    clear.className = 'tag-chip';
+    clear.style.color = 'var(--coral)';
+    clear.textContent = '✕ Clear tags';
+    clear.onclick = () => { activeTags.clear(); render(); };
+    container.appendChild(clear);
+  }
 }
 
 function render(){
@@ -364,11 +405,13 @@ function render(){
   grid.innerHTML = '';
 
   const filtered = recipes.filter(r => {
-    if (activeTag && !r.tags.includes(activeTag)) return false;
+    if (activeTags.size > 0 && ![...activeTags].every(t => r.tags.includes(t))) return false;
     if (!query) return true;
-    const haystack = [r.title, r.description, r.tags.join(' '), r.text].join(' ').toLowerCase();
+    const haystack = [r.title, r.description, r.tags.join(' '), r.ingredients, r.method].join(' ').toLowerCase();
     return haystack.includes(query);
   });
+
+  currentFiltered = filtered;
 
   if (filtered.length === 0){
     grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">
@@ -409,7 +452,8 @@ function openView(id){
   document.getElementById('v-title').textContent = r.title;
   document.getElementById('v-desc').textContent = r.description || '';
   document.getElementById('v-tags').innerHTML = r.tags.map(t => `<span>${escapeHtml(t)}</span>`).join('');
-  document.getElementById('v-text').textContent = r.text || '';
+  document.getElementById('v-ingredients').textContent = r.ingredients || '';
+  document.getElementById('v-method').textContent = r.method || '';
   const linkEl = document.getElementById('v-link');
   if (r.link){
     linkEl.href = r.link;
@@ -442,13 +486,15 @@ function openEditor(id){
     document.getElementById('f-desc').value = r.description || '';
     document.getElementById('f-tags').value = r.tags.join(', ');
     document.getElementById('f-link').value = r.link || '';
-    document.getElementById('f-text').value = r.text || '';
+    document.getElementById('f-ingredients').value = r.ingredients || '';
+    document.getElementById('f-method').value = r.method || '';
   } else {
     document.getElementById('f-title').value = '';
     document.getElementById('f-desc').value = '';
     document.getElementById('f-tags').value = '';
     document.getElementById('f-link').value = '';
-    document.getElementById('f-text').value = '';
+    document.getElementById('f-ingredients').value = '';
+    document.getElementById('f-method').value = '';
   }
   document.getElementById('editorOverlay').classList.add('open');
 }
@@ -465,7 +511,8 @@ function saveRecipe(){
     description: document.getElementById('f-desc').value.trim(),
     tags,
     link: document.getElementById('f-link').value.trim(),
-    text: document.getElementById('f-text').value.trim()
+    ingredients: document.getElementById('f-ingredients').value.trim(),
+    method: document.getElementById('f-method').value.trim()
   };
 
   if (editingId){
@@ -491,7 +538,28 @@ function deleteRecipe(){
   if (config.token) pushToGitHub(true);
 }
 
-/* ---------- TOAST ---------- */
+function deleteFromView(){
+  const id = viewingId;
+  const r = recipes.find(x => x.id === id);
+  if (!r) return;
+  if (!confirm(`Delete "${r.title}"? This can't be undone.`)) return;
+  recipes = recipes.filter(x => x.id !== id);
+  save();
+  closeView();
+  render();
+  showToast('Recipe deleted');
+  if (config.token) pushToGitHub(true);
+}
+
+function pickRandom(){
+  if (currentFiltered.length === 0){
+    showToast('No recipes match the current filters');
+    return;
+  }
+  const pick = currentFiltered[Math.floor(Math.random() * currentFiltered.length)];
+  openView(pick.id);
+}
+
 let toastTimer;
 function showToast(msg){
   const t = document.getElementById('toast');
