@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recipe Book</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0D1117;
+    --panel:#161B22;
+    --panel2:#1C232C;
+    --text:#F5F5F0;
+    --muted:#8B95A1;
+    --coral:#FF6B5B;
+    --turq:#4ECDC4;
+    --purple:#A78BFA;
+    --lime:#C4F542;
+    --radius:18px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter', sans-serif;
+    min-height:100vh;
+    padding:24px 16px 80px;
+  }
+  h1,h2,h3,.display{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+  }
+  .wrap{max-width:880px; margin:0 auto;}
+
+  /* HEADER */
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:24px; flex-wrap:wrap; gap:12px;
+  }
+  .logo{
+    font-size:1.8rem; letter-spacing:-0.02em; display:flex; align-items:center; gap:10px;
+  }
+  .logo .dot{
+    width:14px; height:14px; border-radius:50%;
+    background:var(--lime);
+    box-shadow: 6px 0 0 -2px var(--coral), 12px 0 0 -4px var(--turq);
+  }
+  .header-actions{display:flex; gap:8px;}
+  button, .btn{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    border:none; border-radius:999px;
+    padding:10px 18px;
+    cursor:pointer;
+    font-size:0.85rem;
+    transition:transform .15s ease, box-shadow .15s ease;
+    background:var(--panel2);
+    color:var(--text);
+  }
+  button:hover, .btn:hover{ transform:translateY(-2px); }
+  .btn-primary{
+    background:var(--lime); color:#0D1117;
+    box-shadow:4px 4px 0 0 var(--coral);
+  }
+  .btn-primary:hover{ box-shadow:6px 6px 0 0 var(--coral); }
+  .btn-ghost{
+    background:transparent; color:var(--muted); border:1px solid #2A3340;
+  }
+  .btn-ghost:hover{ color:var(--text); border-color:var(--turq); }
+
+  /* SEARCH */
+  .search-bar{
+    display:flex; align-items:center; gap:10px;
+    background:var(--panel);
+    border-radius:999px;
+    padding:14px 22px;
+    margin-bottom:18px;
+    box-shadow: 5px 5px 0 0 rgba(78,205,196,0.25), -5px 5px 0 0 rgba(167,139,250,0.18);
+  }
+  .search-bar input{
+    flex:1; background:none; border:none; outline:none;
+    color:var(--text); font-size:1rem; font-family:'Inter',sans-serif;
+  }
+  .search-bar input::placeholder{ color:var(--muted); }
+  .search-bar svg{ flex-shrink:0; opacity:0.6; }
+
+  /* TAG FILTERS */
+  .tag-filters{
+    display:flex; gap:8px; flex-wrap:wrap; margin-bottom:22px;
+  }
+  .tag-chip{
+    font-family:'Space Grotesk',sans-serif; font-weight:700;
+    font-size:0.75rem; text-transform:uppercase; letter-spacing:0.04em;
+    padding:6px 14px; border-radius:999px; cursor:pointer;
+    background:var(--panel2); color:var(--muted);
+    border:1px solid transparent;
+    transition: all .15s ease;
+  }
+  .tag-chip.active{
+    color:#0D1117;
+  }
+  .tag-chip:nth-child(4n+1).active{ background:var(--lime); }
+  .tag-chip:nth-child(4n+2).active{ background:var(--turq); }
+  .tag-chip:nth-child(4n+3).active{ background:var(--coral); }
+  .tag-chip:nth-child(4n+4).active{ background:var(--purple); }
+  .tag-chip:not(.active):hover{ color:var(--text); border-color:#3A4456; }
+
+  /* RECIPE GRID */
+  .grid{
+    display:grid; grid-template-columns:1fr; gap:24px;
+  }
+  @media(min-width:680px){ .grid{ grid-template-columns:1fr 1fr; } }
+
+  .card{
+    background:var(--panel);
+    border-radius:var(--radius);
+    padding:20px;
+    cursor:pointer;
+    position:relative;
+    transition: transform .18s ease;
+  }
+  .card:hover{ transform:translateY(-4px); }
+  /* color-cycled offset shadows, world-cup style */
+  .card:nth-child(4n+1){ box-shadow: 7px 7px 0 0 var(--coral), 14px 14px 0 0 var(--turq); }
+  .card:nth-child(4n+2){ box-shadow: 7px 7px 0 0 var(--turq), 14px 14px 0 0 var(--purple); }
+  .card:nth-child(4n+3){ box-shadow: 7px 7px 0 0 var(--purple), 14px 14px 0 0 var(--lime); }
+  .card:nth-child(4n+4){ box-shadow: 7px 7px 0 0 var(--lime), 14px 14px 0 0 var(--coral); }
+
+  .card h3{ font-size:1.25rem; margin-bottom:8px; line-height:1.2; }
+  .card p{ color:var(--muted); font-size:0.9rem; line-height:1.5; margin-bottom:12px; }
+  .card-tags{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px;}
+  .card-tags span{
+    font-size:0.68rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em;
+    padding:4px 10px; border-radius:999px; background:var(--panel2); color:var(--turq);
+  }
+  .card-link{
+    font-size:0.8rem; color:var(--lime); text-decoration:none; font-weight:600;
+  }
+
+  .empty-state{
+    text-align:center; padding:60px 20px; color:var(--muted);
+  }
+  .empty-state .display{ color:var(--text); font-size:1.4rem; margin-bottom:8px;}
+
+  /* MODAL */
+  .overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,0.6);
+    display:none; align-items:center; justify-content:center;
+    padding:16px; z-index:50; backdrop-filter: blur(3px);
+  }
+  .overlay.open{ display:flex; }
+  .modal{
+    background:var(--panel); border-radius:var(--radius);
+    max-width:600px; width:100%; max-height:88vh; overflow-y:auto;
+    padding:28px;
+    box-shadow: 10px 10px 0 0 var(--coral), 20px 20px 0 0 var(--turq);
+  }
+  .modal h2{ font-size:1.6rem; margin-bottom:4px; }
+  .modal label{
+    display:block; font-family:'Space Grotesk',sans-serif; font-weight:700;
+    font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em;
+    color:var(--turq); margin:18px 0 6px;
+  }
+  .modal input, .modal textarea{
+    width:100%; background:var(--panel2); border:1px solid #2A3340;
+    border-radius:10px; padding:12px 14px; color:var(--text);
+    font-family:'Inter',sans-serif; font-size:0.95rem; outline:none;
+    resize:vertical;
+  }
+  .modal input:focus, .modal textarea:focus{ border-color:var(--lime); }
+  .modal-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:24px; }
+  .modal-close{
+    position:absolute; top:18px; right:18px; background:none; border:none;
+    color:var(--muted); font-size:1.4rem; cursor:pointer; padding:4px;
+    line-height:1;
+  }
+  .modal-close:hover{ color:var(--coral); }
+  .modal-body{ display:none; }
+  .modal-body.open{ display:block; }
+  .view-tags{ display:flex; gap:6px; flex-wrap:wrap; margin:10px 0 16px;}
+  .view-tags span{
+    font-size:0.7rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em;
+    padding:5px 12px; border-radius:999px; background:var(--panel2); color:var(--lime);
+  }
+  .view-text{
+    white-space:pre-wrap; line-height:1.7; font-size:0.95rem; color:var(--text);
+    background:var(--panel2); border-radius:12px; padding:16px; margin-top:8px;
+  }
+  .view-link{
+    display:inline-block; margin-top:14px; color:var(--turq); font-weight:600; text-decoration:none;
+  }
+
+  /* TOAST */
+  .toast{
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(100px);
+    background:var(--panel2); color:var(--text); padding:12px 24px;
+    border-radius:999px; font-size:0.9rem; font-weight:600;
+    box-shadow: 4px 4px 0 0 var(--lime);
+    transition: transform .25s ease; z-index:100;
+  }
+  .toast.show{ transform:translateX(-50%) translateY(0); }
+
+  /* SETTINGS PANEL */
+  .settings-row{ display:flex; gap:8px; align-items:center; }
+  .settings-row input{ flex:1; }
+  .hint{ font-size:0.78rem; color:var(--muted); margin-top:6px; line-height:1.5; }
+  .hint a{ color:var(--turq); }
+  .status-pill{
+    font-size:0.7rem; font-weight:700; padding:4px 10px; border-radius:999px;
+    text-transform:uppercase; letter-spacing:0.04em;
+  }
+  .status-ok{ background:var(--lime); color:#0D1117; }
+  .status-bad{ background:var(--coral); color:#0D1117; }
+  .status-none{ background:var(--panel2); color:var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="logo"><span class="dot"></span> Recipe Book</div>
+    <div class="header-actions">
+      <button class="btn-ghost" onclick="openSettings()">Sync</button>
+      <button class="btn-primary" onclick="openEditor()">+ Add recipe</button>
+    </div>
+  </header>
+
+  <div class="search-bar">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input id="searchInput" type="text" placeholder="Search recipes, ingredients, tags…" oninput="render()">
+  </div>
+
+  <div class="tag-filters" id="tagFilters"></div>
+
+  <div class="grid" id="grid"></div>
+
+</div>
+
+<!-- RECIPE EDITOR MODAL -->
+<div class="overlay" id="editorOverlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeEditor()">×</button>
+    <h2 id="editorTitle">New recipe</h2>
+    <label>Title</label>
+    <input id="f-title" type="text" placeholder="e.g. Sunday Roast Chicken">
+    <label>Description</label>
+    <textarea id="f-desc" rows="2" placeholder="A short blurb about this recipe"></textarea>
+    <label>Tags (comma separated)</label>
+    <input id="f-tags" type="text" placeholder="e.g. dinner, chicken, oven">
+    <label>Link (optional)</label>
+    <input id="f-link" type="text" placeholder="https://...">
+    <label>Recipe</label>
+    <textarea id="f-text" rows="10" placeholder="Ingredients and method..."></textarea>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="deleteBtn" onclick="deleteRecipe()" style="display:none;">Delete</button>
+      <button class="btn-ghost" onclick="closeEditor()">Cancel</button>
+      <button class="btn-primary" onclick="saveRecipe()">Save recipe</button>
+    </div>
+  </div>
+</div>
+
+<!-- RECIPE VIEW MODAL -->
+<div class="overlay" id="viewOverlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeView()">×</button>
+    <h2 id="v-title"></h2>
+    <p id="v-desc" style="color:var(--muted); margin-top:6px;"></p>
+    <div class="view-tags" id="v-tags"></div>
+    <a id="v-link" class="view-link" target="_blank" rel="noopener">View original source ↗</a>
+    <div class="view-text" id="v-text"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="editFromView()">Edit</button>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="overlay" id="settingsOverlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeSettings()">×</button>
+    <h2>Sync to GitHub</h2>
+    <p style="color:var(--muted); margin-top:8px; font-size:0.9rem; line-height:1.5;">
+      Recipes are stored as a JSON file in a GitHub repo. Create a
+      <a href="https://github.com/settings/tokens/new" target="_blank" style="color:var(--turq);">personal access token</a>
+      with <strong>repo</strong> scope (classic token) and enter your details below.
+    </p>
+
+    <label>Status</label>
+    <span class="status-pill status-none" id="syncStatus">Not connected</span>
+
+    <label>GitHub username</label>
+    <input id="cfg-owner" type="text" placeholder="e.g. martyrunner">
+    <label>Repository name</label>
+    <input id="cfg-repo" type="text" placeholder="e.g. recipe-book">
+    <label>File path</label>
+    <input id="cfg-path" type="text" placeholder="recipes.json" value="recipes.json">
+    <label>Personal access token</label>
+    <input id="cfg-token" type="password" placeholder="ghp_...">
+
+    <div class="hint">
+      The token is stored only in this browser's local storage. Don't share a deployed link with the token saved — it's only safe on devices you trust.
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="loadFromGitHub()">Pull from GitHub</button>
+      <button class="btn-primary" onclick="saveSettingsAndPush()">Save &amp; push</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const LS_KEY = 'recipeBookData';
+const LS_CFG = 'recipeBookGitHubConfig';
+
+let recipes = JSON.parse(localStorage.getItem(LS_KEY) || '[]');
+let config = JSON.parse(localStorage.getItem(LS_CFG) || '{}');
+let activeTag = null;
+let editingId = null;
+let viewingId = null;
+
+// Seed with an example recipe on first run
+if (recipes.length === 0) {
+  recipes = [{
+    id: crypto.randomUUID(),
+    title: "Honey Soy Salmon",
+    description: "Quick weeknight salmon with a sticky honey soy glaze, served with steamed greens.",
+    tags: ["dinner", "fish", "quick"],
+    link: "",
+    text: "Ingredients:\n- 2 salmon fillets\n- 2 tbsp soy sauce\n- 1 tbsp honey\n- 1 clove garlic, minced\n- 1 tsp grated ginger\n- Steamed broccoli and rice to serve\n\nMethod:\n1. Mix soy sauce, honey, garlic and ginger in a bowl.\n2. Marinate salmon for 10 minutes.\n3. Pan-fry skin-side down for 4 minutes, flip and cook 3 more minutes, basting with marinade.\n4. Serve over rice with steamed greens."
+  }];
+  save();
+}
+
+function save(){
+  localStorage.setItem(LS_KEY, JSON.stringify(recipes));
+}
+
+function allTags(){
+  const set = new Set();
+  recipes.forEach(r => r.tags.forEach(t => set.add(t)));
+  return [...set].sort();
+}
+
+function renderTags(){
+  const container = document.getElementById('tagFilters');
+  container.innerHTML = '';
+  allTags().forEach(tag => {
+    const chip = document.createElement('div');
+    chip.className = 'tag-chip' + (activeTag === tag ? ' active' : '');
+    chip.textContent = tag;
+    chip.onclick = () => { activeTag = (activeTag === tag) ? null : tag; render(); };
+    container.appendChild(chip);
+  });
+}
+
+function render(){
+  renderTags();
+  const query = document.getElementById('searchInput').value.toLowerCase().trim();
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+
+  const filtered = recipes.filter(r => {
+    if (activeTag && !r.tags.includes(activeTag)) return false;
+    if (!query) return true;
+    const haystack = [r.title, r.description, r.tags.join(' '), r.text].join(' ').toLowerCase();
+    return haystack.includes(query);
+  });
+
+  if (filtered.length === 0){
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">
+      <div class="display">No recipes found</div>
+      <p>Try a different search, or add a new recipe to get started.</p>
+    </div>`;
+    return;
+  }
+
+  filtered.forEach(r => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.onclick = () => openView(r.id);
+    card.innerHTML = `
+      <h3>${escapeHtml(r.title)}</h3>
+      <p>${escapeHtml(r.description || '')}</p>
+      <div class="card-tags">${r.tags.map(t => `<span>${escapeHtml(t)}</span>`).join('')}</div>
+      ${r.link ? `<a class="card-link" href="${escapeAttr(r.link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">View source ↗</a>` : ''}
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str || '';
+  return div.innerHTML;
+}
+function escapeAttr(str){
+  return (str || '').replace(/"/g, '&quot;');
+}
+
+/* ---------- VIEW MODAL ---------- */
+function openView(id){
+  const r = recipes.find(x => x.id === id);
+  if (!r) return;
+  viewingId = id;
+  document.getElementById('v-title').textContent = r.title;
+  document.getElementById('v-desc').textContent = r.description || '';
+  document.getElementById('v-tags').innerHTML = r.tags.map(t => `<span>${escapeHtml(t)}</span>`).join('');
+  document.getElementById('v-text').textContent = r.text || '';
+  const linkEl = document.getElementById('v-link');
+  if (r.link){
+    linkEl.href = r.link;
+    linkEl.style.display = 'inline-block';
+  } else {
+    linkEl.style.display = 'none';
+  }
+  document.getElementById('viewOverlay').classList.add('open');
+}
+function closeView(){
+  document.getElementById('viewOverlay').classList.remove('open');
+  viewingId = null;
+}
+function editFromView(){
+  const id = viewingId;
+  closeView();
+  openEditor(id);
+}
+
+/* ---------- EDITOR MODAL ---------- */
+function openEditor(id){
+  editingId = id || null;
+  const isEdit = !!editingId;
+  document.getElementById('editorTitle').textContent = isEdit ? 'Edit recipe' : 'New recipe';
+  document.getElementById('deleteBtn').style.display = isEdit ? 'inline-block' : 'none';
+
+  if (isEdit){
+    const r = recipes.find(x => x.id === editingId);
+    document.getElementById('f-title').value = r.title;
+    document.getElementById('f-desc').value = r.description || '';
+    document.getElementById('f-tags').value = r.tags.join(', ');
+    document.getElementById('f-link').value = r.link || '';
+    document.getElementById('f-text').value = r.text || '';
+  } else {
+    document.getElementById('f-title').value = '';
+    document.getElementById('f-desc').value = '';
+    document.getElementById('f-tags').value = '';
+    document.getElementById('f-link').value = '';
+    document.getElementById('f-text').value = '';
+  }
+  document.getElementById('editorOverlay').classList.add('open');
+}
+function closeEditor(){
+  document.getElementById('editorOverlay').classList.remove('open');
+  editingId = null;
+}
+function saveRecipe(){
+  const title = document.getElementById('f-title').value.trim();
+  if (!title){ showToast('Please enter a title'); return; }
+  const tags = document.getElementById('f-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+  const data = {
+    title,
+    description: document.getElementById('f-desc').value.trim(),
+    tags,
+    link: document.getElementById('f-link').value.trim(),
+    text: document.getElementById('f-text').value.trim()
+  };
+
+  if (editingId){
+    const r = recipes.find(x => x.id === editingId);
+    Object.assign(r, data);
+  } else {
+    recipes.push({ id: crypto.randomUUID(), ...data });
+  }
+  save();
+  closeEditor();
+  render();
+  showToast('Recipe saved');
+  if (config.token) pushToGitHub(true);
+}
+function deleteRecipe(){
+  if (!editingId) return;
+  if (!confirm('Delete this recipe?')) return;
+  recipes = recipes.filter(x => x.id !== editingId);
+  save();
+  closeEditor();
+  render();
+  showToast('Recipe deleted');
+  if (config.token) pushToGitHub(true);
+}
+
+/* ---------- TOAST ---------- */
+let toastTimer;
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+/* ---------- GITHUB SYNC ---------- */
+function openSettings(){
+  document.getElementById('cfg-owner').value = config.owner || '';
+  document.getElementById('cfg-repo').value = config.repo || '';
+  document.getElementById('cfg-path').value = config.path || 'recipes.json';
+  document.getElementById('cfg-token').value = config.token || '';
+  updateSyncStatus();
+  document.getElementById('settingsOverlay').classList.add('open');
+}
+function closeSettings(){
+  document.getElementById('settingsOverlay').classList.remove('open');
+}
+function updateSyncStatus(status){
+  const pill = document.getElementById('syncStatus');
+  if (status === 'ok'){
+    pill.textContent = 'Connected'; pill.className = 'status-pill status-ok';
+  } else if (status === 'error'){
+    pill.textContent = 'Connection failed'; pill.className = 'status-pill status-bad';
+  } else if (config.token){
+    pill.textContent = 'Configured'; pill.className = 'status-pill status-ok';
+  } else {
+    pill.textContent = 'Not connected'; pill.className = 'status-pill status-none';
+  }
+}
+function readConfigForm(){
+  return {
+    owner: document.getElementById('cfg-owner').value.trim(),
+    repo: document.getElementById('cfg-repo').value.trim(),
+    path: document.getElementById('cfg-path').value.trim() || 'recipes.json',
+    token: document.getElementById('cfg-token').value.trim()
+  };
+}
+function saveSettingsAndPush(){
+  config = readConfigForm();
+  if (!config.owner || !config.repo || !config.token){
+    showToast('Please fill in owner, repo and token');
+    return;
+  }
+  localStorage.setItem(LS_CFG, JSON.stringify(config));
+  pushToGitHub(false);
+}
+
+async function githubApiUrl(){
+  return `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}`;
+}
+
+async function pushToGitHub(silent){
+  if (!config.token) return;
+  try {
+    const url = await githubApiUrl();
+    // Get current SHA if file exists
+    let sha = null;
+    const getRes = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${config.token}`, 'Accept': 'application/vnd.github+json' }
+    });
+    if (getRes.ok){
+      const getData = await getRes.json();
+      sha = getData.sha;
+    }
+
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(recipes, null, 2))));
+    const body = {
+      message: `Update recipes.json (${recipes.length} recipes)`,
+      content
+    };
+    if (sha) body.sha = sha;
+
+    const putRes = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${config.token}`,
+        'Accept': 'application/vnd.github+json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    });
+
+    if (!putRes.ok){
+      const err = await putRes.json();
+      throw new Error(err.message || 'Push failed');
+    }
+
+    updateSyncStatus('ok');
+    if (!silent) { showToast('Synced to GitHub'); closeSettings(); }
+  } catch(e){
+    updateSyncStatus('error');
+    showToast('Sync failed: ' + e.message);
+  }
+}
+
+async function loadFromGitHub(){
+  config = readConfigForm();
+  if (!config.owner || !config.repo || !config.token){
+    showToast('Please fill in owner, repo and token');
+    return;
+  }
+  try {
+    const url = await githubApiUrl();
+    const res = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${config.token}`, 'Accept': 'application/vnd.github+json' }
+    });
+    if (res.status === 404){
+      showToast('File not found yet — will be created on first push');
+      localStorage.setItem(LS_CFG, JSON.stringify(config));
+      updateSyncStatus('ok');
+      return;
+    }
+    if (!res.ok) throw new Error('Could not reach repository');
+
+    const data = await res.json();
+    const content = decodeURIComponent(escape(atob(data.content)));
+    const parsed = JSON.parse(content);
+    if (!Array.isArray(parsed)) throw new Error('recipes.json is not a valid array');
+
+    recipes = parsed;
+    save();
+    localStorage.setItem(LS_CFG, JSON.stringify(config));
+    render();
+    updateSyncStatus('ok');
+    showToast(`Loaded ${recipes.length} recipes from GitHub`);
+    closeSettings();
+  } catch(e){
+    updateSyncStatus('error');
+    showToast('Load failed: ' + e.message);
+  }
+}
+
+/* ---------- INIT ---------- */
+render();
+</script>
+</body>
+</html>
