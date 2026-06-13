@@ -10,7 +10,7 @@
 <style>
   :root{
     --bg:#0D1117;
-    --panel:#161B22;
+    --panel:#212833;
     --panel2:#1C232C;
     --text:#F5F5F0;
     --muted:#8B95A1;
@@ -41,6 +41,7 @@
   }
   .logo{
     font-size:1.8rem; letter-spacing:-0.02em; display:flex; align-items:center; gap:10px;
+    font-family:'Space Grotesk', sans-serif; font-weight:700;
   }
   .logo .dot{
     width:14px; height:14px; border-radius:50%;
@@ -116,25 +117,20 @@
   .card{
     background:var(--panel);
     border-radius:var(--radius);
-    padding:20px;
+    padding:16px 20px;
     cursor:pointer;
     position:relative;
     transition: transform .18s ease;
   }
   .card:hover{ transform:translateY(-4px); }
   /* color-cycled offset shadows, world-cup style */
-  .card:nth-child(4n+1){ box-shadow: 7px 7px 0 0 var(--coral), 14px 14px 0 0 var(--turq); }
-  .card:nth-child(4n+2){ box-shadow: 7px 7px 0 0 var(--turq), 14px 14px 0 0 var(--purple); }
-  .card:nth-child(4n+3){ box-shadow: 7px 7px 0 0 var(--purple), 14px 14px 0 0 var(--lime); }
-  .card:nth-child(4n+4){ box-shadow: 7px 7px 0 0 var(--lime), 14px 14px 0 0 var(--coral); }
+  .card:nth-child(4n+1){ box-shadow: 3.5px 3.5px 0 0 var(--coral), 7px 7px 0 0 var(--turq); }
+  .card:nth-child(4n+2){ box-shadow: 3.5px 3.5px 0 0 var(--turq), 7px 7px 0 0 var(--purple); }
+  .card:nth-child(4n+3){ box-shadow: 3.5px 3.5px 0 0 var(--purple), 7px 7px 0 0 var(--lime); }
+  .card:nth-child(4n+4){ box-shadow: 3.5px 3.5px 0 0 var(--lime), 7px 7px 0 0 var(--coral); }
 
-  .card h3{ font-size:1.25rem; margin-bottom:8px; line-height:1.2; }
-  .card p{ color:var(--muted); font-size:0.9rem; line-height:1.5; margin-bottom:12px; }
-  .card-tags{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px;}
-  .card-tags span{
-    font-size:0.68rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em;
-    padding:4px 10px; border-radius:999px; background:var(--panel2); color:var(--turq);
-  }
+  .card h3{ font-size:1.25rem; margin-bottom:6px; line-height:1.2; }
+  .card p{ color:var(--muted); font-size:0.9rem; line-height:1.5; margin:0; }
   .card-link{
     font-size:0.8rem; color:var(--lime); text-decoration:none; font-weight:600;
   }
@@ -428,8 +424,6 @@ function render(){
     card.innerHTML = `
       <h3>${escapeHtml(r.title)}</h3>
       <p>${escapeHtml(r.description || '')}</p>
-      <div class="card-tags">${r.tags.map(t => `<span>${escapeHtml(t)}</span>`).join('')}</div>
-      ${r.link ? `<a class="card-link" href="${escapeAttr(r.link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">View source ↗</a>` : ''}
     `;
     grid.appendChild(card);
   });
